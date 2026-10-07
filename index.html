@@ -122,6 +122,49 @@
             margin-left: 4px;
         }
 
+        /* 雷数设置面板 */
+        .bomb-config-panel {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #1e2233;
+            padding: 6px 14px;
+            border-radius: 60px;
+            box-shadow: inset 0 2px 6px #0e101a;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .bomb-config-panel label {
+            font-size: 0.75rem;
+            color: #97a3c9;
+            font-weight: 600;
+        }
+
+        .bomb-config-panel input[type="number"] {
+            width: 60px;
+            background: #2b2f42;
+            border: 1px solid #4c5a8c;
+            border-radius: 30px;
+            color: #eef3ff;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .bomb-config-panel input[type="number"]:focus {
+            border-color: #ffd966;
+        }
+
+        .bomb-config-panel .hint-text {
+            font-size: 0.65rem;
+            color: #6d7a9e;
+        }
+
         .board-wrapper {
             position: relative;
             width: 100%;
@@ -129,7 +172,6 @@
             justify-content: center;
             overflow-x: auto;
             padding: 4px 0;
-            /* 允许横向滚动，防止大棋盘被压缩 */
             -webkit-overflow-scrolling: touch;
         }
 
@@ -140,7 +182,6 @@
             box-shadow: inset 0 0 0 2px #0f121c;
             width: fit-content;
             margin: 0 auto;
-            /* 通过 CSS 变量控制格子大小和间距 */
             --cell-size: 44px;
             --cell-gap: 3px;
             gap: var(--cell-gap);
@@ -165,21 +206,13 @@
             text-shadow: 0 1px 2px black;
             font-family: 'Segoe UI', 'Courier New', monospace;
             flex-shrink: 0;
-            /* 确保文字不会溢出 */
             overflow: hidden;
             line-height: 1;
         }
 
-        /* 根据格子数量动态调整字体大小 */
-        .board[data-size="large"] .cell {
-            font-size: 0.75rem;
-        }
-        .board[data-size="xlarge"] .cell {
-            font-size: 0.65rem;
-        }
-        .board[data-size="huge"] .cell {
-            font-size: 0.55rem;
-        }
+        .board[data-size="large"] .cell { font-size: 0.75rem; }
+        .board[data-size="xlarge"] .cell { font-size: 0.65rem; }
+        .board[data-size="huge"] .cell { font-size: 0.55rem; }
 
         .cell.selected {
             box-shadow: 0 0 0 3px #ffd966, 0 3px 0 #1e222f, 0 0 0 1px #5b627b inset;
@@ -187,31 +220,34 @@
             z-index: 2;
         }
 
-        .cell.flag {
+        /* 实雷旗帜样式 */
+        .cell.flag-real {
             background: #d96c6c;
             box-shadow: 0 3px 0 #6b2e2e, 0 0 0 1px #ffb3b3 inset;
-            color: #2a0a0a;
         }
 
-        .cell.flag::after {
+        /* 虚雷旗帜样式 - 用蓝色区分 */
+        .cell.flag-imag {
+            background: #5a7ab5;
+            box-shadow: 0 3px 0 #2e446b, 0 0 0 1px #a3c2ff inset;
+        }
+
+        .cell.flag-real::after,
+        .cell.flag-imag::after {
             content: "⚑";
             position: absolute;
             font-size: 1.4rem;
             color: #fff6d5;
-            text-shadow: 0 2px 2px #4a1f1f;
+            text-shadow: 0 2px 2px rgba(0,0,0,0.5);
             transform: translateY(-2px);
         }
 
-        /* 小格子时旗帜图标缩小 */
-        .board[data-size="large"] .cell.flag::after {
-            font-size: 1.1rem;
-        }
-        .board[data-size="xlarge"] .cell.flag::after {
-            font-size: 0.9rem;
-        }
-        .board[data-size="huge"] .cell.flag::after {
-            font-size: 0.75rem;
-        }
+        .board[data-size="large"] .cell.flag-real::after,
+        .board[data-size="large"] .cell.flag-imag::after { font-size: 1.1rem; }
+        .board[data-size="xlarge"] .cell.flag-real::after,
+        .board[data-size="xlarge"] .cell.flag-imag::after { font-size: 0.9rem; }
+        .board[data-size="huge"] .cell.flag-real::after,
+        .board[data-size="huge"] .cell.flag-imag::after { font-size: 0.75rem; }
 
         .cell.revealed {
             background: #21263a;
@@ -231,7 +267,6 @@
             transform: scale(0.94);
         }
 
-        /* 游戏结束时所有雷的显示样式 */
         .cell.bomb-revealed {
             background: #7a4d4d !important;
             box-shadow: 0 3px 0 #3d2424, 0 0 0 1px #b87a7a inset !important;
@@ -239,16 +274,9 @@
             cursor: default !important;
         }
 
-        /* 根据棋盘大小调整雷的字体 */
-        .board[data-size="large"] .cell.bomb-revealed {
-            font-size: 0.6rem !important;
-        }
-        .board[data-size="xlarge"] .cell.bomb-revealed {
-            font-size: 0.5rem !important;
-        }
-        .board[data-size="huge"] .cell.bomb-revealed {
-            font-size: 0.4rem !important;
-        }
+        .board[data-size="large"] .cell.bomb-revealed { font-size: 0.6rem !important; }
+        .board[data-size="xlarge"] .cell.bomb-revealed { font-size: 0.5rem !important; }
+        .board[data-size="huge"] .cell.bomb-revealed { font-size: 0.4rem !important; }
 
         .cell.bomb-revealed::after {
             content: '' !important;
@@ -261,6 +289,7 @@
             width: 100%;
             justify-content: center;
             margin-top: 2px;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -291,14 +320,14 @@
             box-shadow: 0 4px 0 #1e2233;
         }
 
-        .btn.action {
-            background: #5a7a5a;
-            box-shadow: 0 4px 0 #2e442e;
-        }
-
-        .btn.action.flag {
+        .btn.action-real {
             background: #b55a5a;
             box-shadow: 0 4px 0 #6b2e2e;
+        }
+
+        .btn.action-imag {
+            background: #5a7ab5;
+            box-shadow: 0 4px 0 #2e446b;
         }
 
         .btn:disabled {
@@ -330,15 +359,8 @@
             font-size: 0.82rem;
         }
 
-        .end-message .good {
-            color: #86e686;
-            font-weight: 700;
-        }
-
-        .end-message .bad {
-            color: #ff8a8a;
-            font-weight: 700;
-        }
+        .end-message .good { color: #86e686; font-weight: 700; }
+        .end-message .bad { color: #ff8a8a; font-weight: 700; }
 
         .footer {
             display: flex;
@@ -372,17 +394,9 @@
             border-radius: 30px;
         }
 
-        .pc-mode .action-bar {
-            display: none;
-        }
-
-        .pc-mode .mobile-hint {
-            display: none;
-        }
-
-        .mobile-mode .pc-hint {
-            display: none;
-        }
+        .pc-mode .action-bar { display: none; }
+        .pc-mode .mobile-hint { display: none; }
+        .mobile-mode .pc-hint { display: none; }
 
         .pc-hint {
             font-size: 0.7rem;
@@ -401,30 +415,84 @@
             border-radius: 30px;
         }
 
+        /* 移动端标旗选择弹窗 */
+        .flag-popup {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .flag-popup.show {
+            display: flex;
+        }
+
+        .flag-popup-content {
+            background: #2b2f42;
+            border-radius: 24px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            min-width: 220px;
+        }
+
+        .flag-popup-content .popup-title {
+            color: #cfd9ff;
+            font-size: 0.9rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .flag-popup-content .popup-btn {
+            padding: 12px 20px;
+            border-radius: 50px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: white;
+            transition: all 0.1s;
+        }
+
+        .flag-popup-content .popup-btn.real {
+            background: #b55a5a;
+            box-shadow: 0 4px 0 #6b2e2e;
+        }
+
+        .flag-popup-content .popup-btn.imag {
+            background: #5a7ab5;
+            box-shadow: 0 4px 0 #2e446b;
+        }
+
+        .flag-popup-content .popup-btn.clear {
+            background: #3a405b;
+            box-shadow: 0 4px 0 #1e2233;
+        }
+
+        .flag-popup-content .popup-btn.cancel {
+            background: #4c5a8c;
+            box-shadow: 0 4px 0 #262c44;
+        }
+
+        .flag-popup-content .popup-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.3);
+        }
+
         @media (max-width: 480px) {
-            .game-container {
-                padding: 10px 8px;
-            }
-            .btn {
-                padding: 8px 10px;
-                font-size: 0.8rem;
-            }
-            .mode-btn {
-                font-size: 0.65rem;
-                padding: 4px 7px;
-            }
-            .diff-btn {
-                font-size: 0.6rem;
-                padding: 4px 6px;
-            }
-            .status {
-                font-size: 0.7rem;
-                padding: 4px 10px;
-            }
-            .board {
-                --cell-gap: 2px;
-                padding: 6px;
-            }
+            .game-container { padding: 10px 8px; }
+            .btn { padding: 8px 10px; font-size: 0.8rem; }
+            .mode-btn { font-size: 0.65rem; padding: 4px 7px; }
+            .diff-btn { font-size: 0.6rem; padding: 4px 6px; }
+            .status { font-size: 0.7rem; padding: 4px 10px; }
+            .board { --cell-gap: 2px; padding: 6px; }
+            .bomb-config-panel { font-size: 0.7rem; padding: 4px 10px; }
+            .bomb-config-panel input[type="number"] { width: 50px; font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -446,13 +514,21 @@
         </div>
     </div>
 
+    <!-- 雷数配置面板 -->
+    <div class="bomb-config-panel">
+        <label>雷数：</label>
+        <input type="number" id="bombCountInput" min="1" max="999" value="10">
+        <span class="hint-text">（修改后点击"新游戏"生效）</span>
+    </div>
+
     <div class="board-wrapper">
         <div id="board" class="board"></div>
     </div>
 
     <div class="action-bar">
-        <button id="revealBtn" class="btn action" disabled>🔍 翻开</button>
-        <button id="flagBtn" class="btn action flag" disabled>🚩 插旗</button>
+        <button id="revealBtn" class="btn action-real" disabled>🔍 翻开</button>
+        <button id="flagRealBtn" class="btn action-real" disabled>🚩 实雷</button>
+        <button id="flagImagBtn" class="btn action-imag" disabled>🔵 虚雷</button>
     </div>
 
     <div id="msgArea" class="msg-area">
@@ -466,10 +542,21 @@
     </div>
 
     <div class="hint-bar mobile-hint">
-        <i>手机模式</i> 点击选中 → 翻开/插旗 · 双击数字翻开周围
+        <i>手机模式</i> 点击选中 → 翻开 / 实雷旗 / 虚雷旗 · 双击数字翻开周围
     </div>
     <div class="hint-bar pc-hint" style="display:none;">
-        <i>电脑模式</i> 左键翻开 · 右键插旗 · 双击数字翻开周围
+        <i>电脑模式</i> 左键翻开 · 右键循环旗 · 双击数字翻开周围
+    </div>
+</div>
+
+<!-- 标旗选择弹窗（长按/右键时弹出，用于选择实/虚旗） -->
+<div id="flagPopup" class="flag-popup">
+    <div class="flag-popup-content">
+        <div class="popup-title">选择旗帜类型</div>
+        <button class="popup-btn real" data-flag="real">🚩 实雷旗</button>
+        <button class="popup-btn imag" data-flag="imag">🔵 虚雷旗</button>
+        <button class="popup-btn clear" data-flag="clear">清除旗帜</button>
+        <button class="popup-btn cancel" data-flag="cancel">取消</button>
     </div>
 </div>
 
@@ -492,7 +579,7 @@
     let board = [];
     let gameOver = false;
     let win = false;
-    let flagCount = 0;
+    let flagCount = 0;       // 总旗数（实+虚）
     let bombCount = 0;
 
     // 手机模式选中状态
@@ -508,6 +595,11 @@
     let lastClickCol = -1;
     const DOUBLE_CLICK_DELAY = 300;
 
+    // 长按计时器
+    let longPressTimer = null;
+    let longPressTriggered = false;
+    const LONG_PRESS_DURATION = 500;
+
     // DOM 元素
     const gameContainer = document.getElementById('gameContainer');
     const boardEl = document.getElementById('board');
@@ -520,9 +612,12 @@
     const resetBtn = document.getElementById('resetBtn');
     const toggleModeBtn = document.getElementById('toggleModeBtn');
     const revealBtn = document.getElementById('revealBtn');
-    const flagBtn = document.getElementById('flagBtn');
+    const flagRealBtn = document.getElementById('flagRealBtn');
+    const flagImagBtn = document.getElementById('flagImagBtn');
     const mobileHint = document.querySelector('.mobile-hint');
     const pcHint = document.querySelector('.pc-hint');
+    const bombCountInput = document.getElementById('bombCountInput');
+    const flagPopup = document.getElementById('flagPopup');
 
     // ---------- 辅助函数 ----------
     function getNeighbors(r, c) {
@@ -554,6 +649,26 @@
             } else {
                 return { real: 0, j: sign, type: 'space' };
             }
+        }
+    }
+
+    // 判断雷是否为“实雷”类型（用于旗帜匹配）
+    function isRealBomb(bomb) {
+        if (!bomb) return false;
+        if (mode === 'complex') {
+            return bomb.type === 'real';
+        } else {
+            return bomb.type === 'time';
+        }
+    }
+
+    // 判断雷是否为“虚雷”类型
+    function isImagBomb(bomb) {
+        if (!bomb) return false;
+        if (mode === 'complex') {
+            return bomb.type === 'imag';
+        } else {
+            return bomb.type === 'space';
         }
     }
 
@@ -645,6 +760,7 @@
         return count;
     }
 
+    // 统计周围旗帜数量（所有旗帜，无论实虚）
     function getFlagCountAround(r, c) {
         const neighbors = getNeighbors(r, c);
         let count = 0;
@@ -652,6 +768,34 @@
             if (board[nr][nc].flag) count++;
         }
         return count;
+    }
+
+    // 统计周围旗帜数量（按类型）
+    function getFlagCountAroundByType(r, c) {
+        const neighbors = getNeighbors(r, c);
+        let realCount = 0, imagCount = 0;
+        for (let [nr, nc] of neighbors) {
+            const cell = board[nr][nc];
+            if (cell.flag) {
+                if (cell.flagType === 'real') realCount++;
+                else if (cell.flagType === 'imag') imagCount++;
+            }
+        }
+        return { real: realCount, imag: imagCount };
+    }
+
+    // 获取周围实际实雷和虚雷的数量
+    function getActualBombCountByType(r, c) {
+        const neighbors = getNeighbors(r, c);
+        let realCount = 0, imagCount = 0;
+        for (let [nr, nc] of neighbors) {
+            const bomb = board[nr][nc].bomb;
+            if (bomb) {
+                if (isRealBomb(bomb)) realCount++;
+                else if (isImagBomb(bomb)) imagCount++;
+            }
+        }
+        return { real: realCount, imag: imagCount };
     }
 
     function checkWin() {
@@ -664,6 +808,8 @@
         return true;
     }
 
+    // 双击逻辑：对于复数模式，检查旗帜总数是否等于实际雷数
+    // 对于闵可夫斯基模式，要求实、j的旗帜数量完全正确
     function doubleClickReveal(r, c) {
         if (gameOver) return;
         const cell = board[r][c];
@@ -671,10 +817,41 @@
         const numInfo = getCellNumber(r, c);
         if (numInfo.display === '') return;
 
-        const actualBombs = getActualBombCount(r, c);
-        const flagsAround = getFlagCountAround(r, c);
+        const actual = getActualBombCountByType(r, c);
+        const flags = getFlagCountAroundByType(r, c);
 
-        if (flagsAround === actualBombs && actualBombs > 0) {
+        let canReveal = false;
+
+        if (mode === 'complex') {
+            // 复数模式：旗帜总数等于实际雷数，且实虚比例符合真实比例或其倒数
+            // 简化：总数相等且实/虚旗数量分别与实/虚雷数量成比例（这里采用更宽松的条件：总数相等即可，因为实虚比例难以严格判断）
+            // 但根据规则，应该检查实虚比例。这里我们采用更严格的条件：实旗数<=实雷数且虚旗数<=虚雷数，且总数相等
+            // 或者允许倒数关系。简化实现：总数相等且实旗数*虚雷数 == 虚旗数*实雷数（比例一致）
+            const totalFlags = flags.real + flags.imag;
+            const totalBombs = actual.real + actual.imag;
+            if (totalFlags === totalBombs && totalBombs > 0) {
+                // 检查比例：如果actual.real和actual.imag都>0，则检查交叉乘积
+                if (actual.real > 0 && actual.imag > 0) {
+                    if (flags.real * actual.imag === flags.imag * actual.real) {
+                        canReveal = true;
+                    }
+                } else if (actual.real === 0 && actual.imag > 0) {
+                    // 全是虚雷，允许全部标虚旗或全部标实旗（倒数）
+                    if (flags.imag === actual.imag || flags.real === actual.imag) canReveal = true;
+                } else if (actual.imag === 0 && actual.real > 0) {
+                    if (flags.real === actual.real || flags.imag === actual.real) canReveal = true;
+                } else if (actual.real === 0 && actual.imag === 0) {
+                    canReveal = true;
+                }
+            }
+        } else {
+            // 闵可夫斯基模式：要求实、j的旗帜数量完全正确
+            if (flags.real === actual.real && flags.imag === actual.imag && (actual.real + actual.imag) > 0) {
+                canReveal = true;
+            }
+        }
+
+        if (canReveal) {
             const neighbors = getNeighbors(r, c);
             let revealedAny = false;
             for (let [nr, nc] of neighbors) {
@@ -715,15 +892,21 @@
         gameOver = true;
         win = isWin;
 
-        let correctFlags = 0;
+        let correctRealFlags = 0;
+        let correctImagFlags = 0;
         let wrongFlags = 0;
         let missedBombs = 0;
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 const cell = board[r][c];
                 if (cell.flag) {
-                    if (cell.bomb) correctFlags++;
-                    else wrongFlags++;
+                    if (cell.bomb) {
+                        if (cell.flagType === 'real' && isRealBomb(cell.bomb)) correctRealFlags++;
+                        else if (cell.flagType === 'imag' && isImagBomb(cell.bomb)) correctImagFlags++;
+                        else wrongFlags++;
+                    } else {
+                        wrongFlags++;
+                    }
                 } else {
                     if (cell.bomb) missedBombs++;
                 }
@@ -731,12 +914,13 @@
         }
 
         let msg = '';
+        const totalCorrect = correctRealFlags + correctImagFlags;
         if (isWin) {
-            msg = `🎉 胜利！ 标对雷: ${correctFlags} / ${bombCount}`;
+            msg = `🎉 胜利！ 标对: ${totalCorrect} / ${bombCount}`;
             if (wrongFlags > 0) msg += `，标错: ${wrongFlags}`;
             if (missedBombs > 0) msg += `，漏标: ${missedBombs}`;
         } else {
-            msg = `💥 失败。 标对雷: ${correctFlags}，标错: ${wrongFlags}，漏标: ${missedBombs}`;
+            msg = `💥 失败。 标对: ${totalCorrect}，标错: ${wrongFlags}，漏标: ${missedBombs}`;
         }
         msgArea.innerHTML = `<span class="end-message">${msg}</span>`;
 
@@ -746,26 +930,18 @@
         renderBoard(true);
     }
 
-    // ---------- 根据棋盘大小动态设置格子尺寸 ----------
     function updateBoardSize() {
-        // 根据列数动态计算格子大小和间距
-        // 可用宽度大约为 game-container 的 max-width 减去一些 padding
-        // 为了简单起见，我们基于 COLS 设定几个档位
-        const boardWrapperWidth = boardEl.parentElement.clientWidth - 20; // 减去一些余量
-        const padding = 16; // board padding 左右各 8px
+        const boardWrapperWidth = boardEl.parentElement.clientWidth - 20;
+        const padding = 16;
         const availableWidth = Math.max(boardWrapperWidth - padding, 200);
         const gap = COLS > 10 ? 2 : 3;
         const totalGap = (COLS - 1) * gap;
-        // 计算格子尺寸，但设置最小和最大值
         let cellSize = Math.floor((availableWidth - totalGap) / COLS);
-        // 限制范围
         cellSize = Math.min(Math.max(cellSize, 20), 50);
 
-        // 设置 CSS 变量
         boardEl.style.setProperty('--cell-size', cellSize + 'px');
         boardEl.style.setProperty('--cell-gap', gap + 'px');
 
-        // 根据格子尺寸和数量设置 data-size 属性，用于调整字体
         boardEl.removeAttribute('data-size');
         if (cellSize <= 26) {
             boardEl.dataset.size = 'huge';
@@ -776,9 +952,7 @@
         }
     }
 
-    // ---------- 渲染棋盘 ----------
     function renderBoard(showAllBombs = false) {
-        // 先更新尺寸
         updateBoardSize();
 
         boardEl.style.gridTemplateColumns = `repeat(${COLS}, var(--cell-size))`;
@@ -813,7 +987,11 @@
                     }
                 } else {
                     if (cell.flag) {
-                        cellDiv.classList.add('flag');
+                        if (cell.flagType === 'real') {
+                            cellDiv.classList.add('flag-real');
+                        } else if (cell.flagType === 'imag') {
+                            cellDiv.classList.add('flag-imag');
+                        }
                     }
                     if (showAllBombs && cell.bomb) {
                         cellDiv.classList.add('bomb-revealed');
@@ -833,9 +1011,14 @@
                     }
                 }
 
+                // ----- 左键/触摸 -----
                 cellDiv.addEventListener('click', (e) => {
                     e.preventDefault();
                     if (gameOver) return;
+                    if (longPressTriggered) {
+                        longPressTriggered = false;
+                        return;
+                    }
 
                     const now = Date.now();
                     const isDoubleClick = (now - lastClickTime < DOUBLE_CLICK_DELAY) &&
@@ -883,17 +1066,57 @@
                     }
                 });
 
+                // ----- 长按（手机）或右键（电脑）弹出旗帜选择 -----
+                const startLongPress = (e) => {
+                    if (gameOver) return;
+                    if (cell.revealed) return;
+                    // 手机端才启动长按，电脑端由 contextmenu 处理
+                    if (interactionMode !== 'mobile') return;
+
+                    longPressTriggered = false;
+                    longPressTimer = setTimeout(() => {
+                        longPressTriggered = true;
+                        if (selectedRow === r && selectedCol === c) {
+                            // 保持选中
+                        } else {
+                            selectedRow = r;
+                            selectedCol = c;
+                        }
+                        updateActionButtons();
+                        renderBoard();
+                        showFlagPopup(r, c);
+                    }, LONG_PRESS_DURATION);
+                };
+
+                const cancelLongPress = () => {
+                    if (longPressTimer) {
+                        clearTimeout(longPressTimer);
+                        longPressTimer = null;
+                    }
+                };
+
+                cellDiv.addEventListener('touchstart', startLongPress);
+                cellDiv.addEventListener('touchend', cancelLongPress);
+                cellDiv.addEventListener('touchmove', cancelLongPress);
+                cellDiv.addEventListener('touchcancel', cancelLongPress);
+
+                // 电脑右键
                 cellDiv.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
                     if (gameOver) return;
                     const cell = board[r][c];
                     if (cell.revealed) return;
-                    if (cell.flag) {
-                        cell.flag = false;
-                        flagCount--;
-                    } else {
+                    // 右键循环：无旗 → 实旗 → 虚旗 → 无旗
+                    if (!cell.flag) {
                         cell.flag = true;
+                        cell.flagType = 'real';
                         flagCount++;
+                    } else if (cell.flagType === 'real') {
+                        cell.flagType = 'imag';
+                    } else {
+                        cell.flag = false;
+                        cell.flagType = null;
+                        flagCount--;
                     }
                     updateFlagDisplay();
                     if (interactionMode === 'mobile') {
@@ -923,23 +1146,29 @@
     function updateActionButtons() {
         if (interactionMode !== 'mobile') {
             revealBtn.disabled = true;
-            flagBtn.disabled = true;
+            flagRealBtn.disabled = true;
+            flagImagBtn.disabled = true;
             return;
         }
         const hasSelection = selectedRow >= 0 && selectedCol >= 0 && !gameOver;
         if (!hasSelection) {
             revealBtn.disabled = true;
-            flagBtn.disabled = true;
+            flagRealBtn.disabled = true;
+            flagImagBtn.disabled = true;
             return;
         }
         const cell = board[selectedRow][selectedCol];
         if (cell.revealed) {
             revealBtn.disabled = true;
-            flagBtn.disabled = true;
+            flagRealBtn.disabled = true;
+            flagImagBtn.disabled = true;
             return;
         }
+        // 翻开：如果格子有旗则不可用
         revealBtn.disabled = cell.flag;
-        flagBtn.disabled = false;
+        // 旗帜按钮：始终可用（用于切换或清除旗帜）
+        flagRealBtn.disabled = false;
+        flagImagBtn.disabled = false;
     }
 
     function revealSelected() {
@@ -964,22 +1193,119 @@
         }
     }
 
-    function toggleFlagSelected() {
+    // 设置实雷旗
+    function setRealFlagSelected() {
         if (gameOver) return;
         if (selectedRow < 0 || selectedCol < 0) return;
         const cell = board[selectedRow][selectedCol];
         if (cell.revealed) return;
 
-        if (cell.flag) {
+        if (!cell.flag) {
+            cell.flag = true;
+            cell.flagType = 'real';
+            flagCount++;
+        } else if (cell.flagType === 'real') {
+            // 已经是实雷旗，再点一次清除
             cell.flag = false;
+            cell.flagType = null;
             flagCount--;
         } else {
-            cell.flag = true;
-            flagCount++;
+            // 虚雷旗 → 实雷旗
+            cell.flagType = 'real';
         }
         updateFlagDisplay();
         renderBoard();
     }
+
+    // 设置虚雷旗
+    function setImagFlagSelected() {
+        if (gameOver) return;
+        if (selectedRow < 0 || selectedCol < 0) return;
+        const cell = board[selectedRow][selectedCol];
+        if (cell.revealed) return;
+
+        if (!cell.flag) {
+            cell.flag = true;
+            cell.flagType = 'imag';
+            flagCount++;
+        } else if (cell.flagType === 'imag') {
+            // 已经是虚雷旗，再点一次清除
+            cell.flag = false;
+            cell.flagType = null;
+            flagCount--;
+        } else {
+            // 实雷旗 → 虚雷旗
+            cell.flagType = 'imag';
+        }
+        updateFlagDisplay();
+        renderBoard();
+    }
+
+    // ---------- 旗帜选择弹窗 ----------
+    let popupRow = -1, popupCol = -1;
+
+    function showFlagPopup(r, c) {
+        popupRow = r;
+        popupCol = c;
+        flagPopup.classList.add('show');
+    }
+
+    function hideFlagPopup() {
+        flagPopup.classList.remove('show');
+        popupRow = -1;
+        popupCol = -1;
+    }
+
+    // 弹窗按钮事件
+    document.querySelectorAll('.flag-popup .popup-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const action = btn.dataset.flag;
+            if (popupRow < 0 || popupCol < 0) {
+                hideFlagPopup();
+                return;
+            }
+            const cell = board[popupRow][popupCol];
+            if (!cell || cell.revealed) {
+                hideFlagPopup();
+                return;
+            }
+
+            if (action === 'real') {
+                if (!cell.flag) {
+                    cell.flag = true;
+                    cell.flagType = 'real';
+                    flagCount++;
+                } else if (cell.flagType !== 'real') {
+                    cell.flagType = 'real';
+                }
+            } else if (action === 'imag') {
+                if (!cell.flag) {
+                    cell.flag = true;
+                    cell.flagType = 'imag';
+                    flagCount++;
+                } else if (cell.flagType !== 'imag') {
+                    cell.flagType = 'imag';
+                }
+            } else if (action === 'clear') {
+                if (cell.flag) {
+                    cell.flag = false;
+                    cell.flagType = null;
+                    flagCount--;
+                }
+            }
+            updateFlagDisplay();
+            hideFlagPopup();
+            renderBoard();
+        });
+    });
+
+    // 点击弹窗背景关闭
+    flagPopup.addEventListener('click', (e) => {
+        if (e.target === flagPopup) {
+            hideFlagPopup();
+        }
+    });
 
     function revealCell(r, c) {
         const cell = board[r][c];
@@ -1012,18 +1338,36 @@
         lastClickTime = 0;
         lastClickRow = -1;
         lastClickCol = -1;
+        longPressTriggered = false;
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+        hideFlagPopup();
 
         const diff = DIFFICULTIES[difficulty];
         ROWS = diff.rows;
         COLS = diff.cols;
-        TOTAL_BOMBS = diff.bombs;
+
+        // 从输入框读取雷数
+        let inputBombs = parseInt(bombCountInput.value);
+        const maxBombs = ROWS * COLS - 1;
+        if (isNaN(inputBombs) || inputBombs < 1) {
+            inputBombs = diff.bombs;
+            bombCountInput.value = inputBombs;
+        } else if (inputBombs > maxBombs) {
+            inputBombs = maxBombs;
+            bombCountInput.value = inputBombs;
+        }
+        TOTAL_BOMBS = inputBombs;
         bombCount = TOTAL_BOMBS;
 
         board = Array.from({ length: ROWS }, () =>
             Array.from({ length: COLS }, () => ({
                 bomb: null,
                 revealed: false,
-                flag: false
+                flag: false,
+                flagType: null
             }))
         );
 
@@ -1038,7 +1382,6 @@
 
         flagCount = 0;
         updateFlagDisplay();
-        // 先渲染再调整，因为渲染时会调用 updateBoardSize
         renderBoard();
         updateActionButtons();
 
@@ -1068,6 +1411,8 @@
             if (btn.dataset.diff === difficulty) btn.classList.add('active');
             else btn.classList.remove('active');
         });
+        // 自动填入该难度的默认雷数
+        bombCountInput.value = DIFFICULTIES[difficulty].bombs;
         initGame();
     }
 
@@ -1102,25 +1447,30 @@
         btn.addEventListener('click', () => setDifficulty(btn.dataset.diff));
     });
 
-    newGameBtn.addEventListener('click', initGame);
+    newGameBtn.addEventListener('click', () => {
+        // 从输入框读取雷数并初始化
+        initGame();
+    });
     resetBtn.addEventListener('click', initGame);
     toggleModeBtn.addEventListener('click', toggleInteractionMode);
 
     revealBtn.addEventListener('click', revealSelected);
-    flagBtn.addEventListener('click', toggleFlagSelected);
+    flagRealBtn.addEventListener('click', setRealFlagSelected);
+    flagImagBtn.addEventListener('click', setImagFlagSelected);
 
     document.addEventListener('contextmenu', (e) => {
         if (e.target.closest('.cell')) e.preventDefault();
     });
 
-    // 窗口大小改变时重新调整棋盘
     window.addEventListener('resize', () => {
         if (boardEl.children.length > 0) {
             updateBoardSize();
-            // 重新设置网格列宽
             boardEl.style.gridTemplateColumns = `repeat(${COLS}, var(--cell-size))`;
         }
     });
+
+    // 初始化默认雷数
+    bombCountInput.value = DIFFICULTIES[difficulty].bombs;
 
     initGame();
 </script>
