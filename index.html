@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>复扫雷 · Complexweeper</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, monospace;
+            background: #1a1e2c;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 8px;
+            touch-action: manipulation;
+        }
+
+        .game-container {
+            background: #2b2f42;
+            padding: 16px 12px 14px;
+            border-radius: 28px;
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 720px;
+        }
+
+        .top-bar {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 4px;
+            background: #1e2233;
+            padding: 4px 6px;
+            border-radius: 60px;
+            box-shadow: inset 0 2px 6px #0e101a;
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            font-size: 0.75rem;
+            padding: 5px 10px;
+            border-radius: 40px;
+            color: #97a3c9;
+            cursor: pointer;
+            transition: all 0.15s;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+
+        .mode-btn.active {
+            background: #4c5a8c;
+            color: white;
+            box-shadow: 0 3px 0 #262c44;
+        }
+
+        .difficulty-selector {
+            display: flex;
+            gap: 4px;
+            background: #1e2233;
+            padding: 4px 6px;
+            border-radius: 60px;
+            box-shadow: inset 0 2px 6px #0e101a;
+        }
+
+        .diff-btn {
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            font-size: 0.7rem;
+            padding: 5px 8px;
+            border-radius: 40px;
+            color: #97a3c9;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .diff-btn.active {
+            background: #4c5a8c;
+            color: white;
+            box-shadow: 0 3px 0 #262c44;
+        }
+
+        .status {
+            background: #1e2233;
+            padding: 6px 14px;
+            border-radius: 60px;
+            font-weight: 500;
+            font-size: 0.8rem;
+            color: #cfd9ff;
+            box-shadow: inset 0 2px 6px #0e101a;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .status span {
+            color: #ffd966;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+
+        .board-wrapper {
+            position: relative;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+            padding: 4px 0;
+            /* 允许横向滚动，防止大棋盘被压缩 */
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .board {
+            display: grid;
+            background: #1b1f2e;
+            border-radius: 16px;
+            box-shadow: inset 0 0 0 2px #0f121c;
+            width: fit-content;
+            margin: 0 auto;
+            /* 通过 CSS 变量控制格子大小和间距 */
+            --cell-size: 44px;
+            --cell-gap: 3px;
+            gap: var(--cell-gap);
+            padding: 8px;
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border-radius: 10px;
+            background: #3c4259;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #eef3ff;
+            box-shadow: 0 3px 0 #1e222f, 0 0 0 1px #5b627b inset;
+            transition: all 0.08s;
+            cursor: pointer;
+            position: relative;
+            text-shadow: 0 1px 2px black;
+            font-family: 'Segoe UI', 'Courier New', monospace;
+            flex-shrink: 0;
+            /* 确保文字不会溢出 */
+            overflow: hidden;
+            line-height: 1;
+        }
+
+        /* 根据格子数量动态调整字体大小 */
+        .board[data-size="large"] .cell {
+            font-size: 0.75rem;
+        }
+        .board[data-size="xlarge"] .cell {
+            font-size: 0.65rem;
+        }
+        .board[data-size="huge"] .cell {
+            font-size: 0.55rem;
+        }
+
+        .cell.selected {
+            box-shadow: 0 0 0 3px #ffd966, 0 3px 0 #1e222f, 0 0 0 1px #5b627b inset;
+            transform: scale(1.02);
+            z-index: 2;
+        }
+
+        .cell.flag {
+            background: #d96c6c;
+            box-shadow: 0 3px 0 #6b2e2e, 0 0 0 1px #ffb3b3 inset;
+            color: #2a0a0a;
+        }
+
+        .cell.flag::after {
+            content: "⚑";
+            position: absolute;
+            font-size: 1.4rem;
+            color: #fff6d5;
+            text-shadow: 0 2px 2px #4a1f1f;
+            transform: translateY(-2px);
+        }
+
+        /* 小格子时旗帜图标缩小 */
+        .board[data-size="large"] .cell.flag::after {
+            font-size: 1.1rem;
+        }
+        .board[data-size="xlarge"] .cell.flag::after {
+            font-size: 0.9rem;
+        }
+        .board[data-size="huge"] .cell.flag::after {
+            font-size: 0.75rem;
+        }
+
+        .cell.revealed {
+            background: #21263a;
+            box-shadow: 0 0 0 1px #4e556e inset, 0 2px 4px #0b0e14;
+            color: #d0dbff;
+            cursor: default;
+            transform: scale(0.98);
+            font-weight: 600;
+        }
+
+        .cell.revealed.blank {
+            color: #6d7a9e;
+            font-weight: 400;
+        }
+
+        .cell:active:not(.revealed) {
+            transform: scale(0.94);
+        }
+
+        /* 游戏结束时所有雷的显示样式 */
+        .cell.bomb-revealed {
+            background: #7a4d4d !important;
+            box-shadow: 0 3px 0 #3d2424, 0 0 0 1px #b87a7a inset !important;
+            color: #fff0d0 !important;
+            cursor: default !important;
+        }
+
+        /* 根据棋盘大小调整雷的字体 */
+        .board[data-size="large"] .cell.bomb-revealed {
+            font-size: 0.6rem !important;
+        }
+        .board[data-size="xlarge"] .cell.bomb-revealed {
+            font-size: 0.5rem !important;
+        }
+        .board[data-size="huge"] .cell.bomb-revealed {
+            font-size: 0.4rem !important;
+        }
+
+        .cell.bomb-revealed::after {
+            content: '' !important;
+            display: none !important;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+            margin-top: 2px;
+        }
+
+        .btn {
+            background: #4c5a8c;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 10px 16px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #262c44;
+            transition: all 0.08s;
+            letter-spacing: 0.3px;
+            flex: 1;
+            max-width: 140px;
+            text-align: center;
+            touch-action: manipulation;
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #262c44;
+        }
+
+        .btn.secondary {
+            background: #3a405b;
+            box-shadow: 0 4px 0 #1e2233;
+        }
+
+        .btn.action {
+            background: #5a7a5a;
+            box-shadow: 0 4px 0 #2e442e;
+        }
+
+        .btn.action.flag {
+            background: #b55a5a;
+            box-shadow: 0 4px 0 #6b2e2e;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            filter: grayscale(0.6);
+        }
+
+        .msg-area {
+            min-height: 44px;
+            width: 100%;
+            background: #1e2233;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 0.82rem;
+            color: #b9c6f0;
+            box-shadow: inset 0 2px 8px #0e101a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: 500;
+            transition: 0.2s;
+            word-break: break-word;
+        }
+
+        .end-message {
+            color: #e8edff;
+            font-size: 0.82rem;
+        }
+
+        .end-message .good {
+            color: #86e686;
+            font-weight: 700;
+        }
+
+        .end-message .bad {
+            color: #ff8a8a;
+            font-weight: 700;
+        }
+
+        .footer {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 2px;
+            width: 100%;
+        }
+
+        .footer .btn {
+            padding: 9px 14px;
+            font-size: 0.85rem;
+            flex: 1;
+        }
+
+        .hint-bar {
+            font-size: 0.7rem;
+            color: #7c86a8;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .hint-bar i {
+            font-style: normal;
+            background: #2e354a;
+            padding: 2px 10px;
+            border-radius: 30px;
+        }
+
+        .pc-mode .action-bar {
+            display: none;
+        }
+
+        .pc-mode .mobile-hint {
+            display: none;
+        }
+
+        .mobile-mode .pc-hint {
+            display: none;
+        }
+
+        .pc-hint {
+            font-size: 0.7rem;
+            color: #7c86a8;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .pc-hint i {
+            font-style: normal;
+            background: #2e354a;
+            padding: 2px 10px;
+            border-radius: 30px;
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 10px 8px;
+            }
+            .btn {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+            .mode-btn {
+                font-size: 0.65rem;
+                padding: 4px 7px;
+            }
+            .diff-btn {
+                font-size: 0.6rem;
+                padding: 4px 6px;
+            }
+            .status {
+                font-size: 0.7rem;
+                padding: 4px 10px;
+            }
+            .board {
+                --cell-gap: 2px;
+                padding: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="gameContainer" class="game-container mobile-mode">
+    <div class="top-bar">
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="complex">复数</button>
+            <button class="mode-btn" data-mode="minkowski">闵可夫斯基</button>
+        </div>
+        <div class="difficulty-selector">
+            <button class="diff-btn active" data-diff="easy">初级</button>
+            <button class="diff-btn" data-diff="medium">中级</button>
+            <button class="diff-btn" data-diff="hard">高级</button>
+            <button class="diff-btn" data-diff="expert">专家</button>
+        </div>
+        <div class="status">
+            🚩 <span id="flagCount">0</span> / <span id="totalBombs">0</span>
+        </div>
+    </div>
+
+    <div class="board-wrapper">
+        <div id="board" class="board"></div>
+    </div>
+
+    <div class="action-bar">
+        <button id="revealBtn" class="btn action" disabled>🔍 翻开</button>
+        <button id="flagBtn" class="btn action flag" disabled>🚩 插旗</button>
+    </div>
+
+    <div id="msgArea" class="msg-area">
+        选择难度开始游戏
+    </div>
+
+    <div class="footer">
+        <button id="newGameBtn" class="btn">新游戏</button>
+        <button id="resetBtn" class="btn secondary">重开本局</button>
+        <button id="toggleModeBtn" class="btn secondary">📱 手机模式</button>
+    </div>
+
+    <div class="hint-bar mobile-hint">
+        <i>手机模式</i> 点击选中 → 翻开/插旗 · 双击数字翻开周围
+    </div>
+    <div class="hint-bar pc-hint" style="display:none;">
+        <i>电脑模式</i> 左键翻开 · 右键插旗 · 双击数字翻开周围
+    </div>
+</div>
+
+<script>
+    // ---------- 难度配置 ----------
+    const DIFFICULTIES = {
+        easy:   { rows: 6,  cols: 6,  bombs: 6  },
+        medium: { rows: 8,  cols: 8,  bombs: 10 },
+        hard:   { rows: 12, cols: 12, bombs: 22 },
+        expert: { rows: 16, cols: 16, bombs: 40 }
+    };
+
+    let ROWS = 8;
+    let COLS = 8;
+    let TOTAL_BOMBS = 10;
+
+    // 游戏状态
+    let mode = 'complex';
+    let difficulty = 'medium';
+    let board = [];
+    let gameOver = false;
+    let win = false;
+    let flagCount = 0;
+    let bombCount = 0;
+
+    // 手机模式选中状态
+    let selectedRow = -1;
+    let selectedCol = -1;
+
+    // 交互模式
+    let interactionMode = 'mobile';
+
+    // 双击计时器
+    let lastClickTime = 0;
+    let lastClickRow = -1;
+    let lastClickCol = -1;
+    const DOUBLE_CLICK_DELAY = 300;
+
+    // DOM 元素
+    const gameContainer = document.getElementById('gameContainer');
+    const boardEl = document.getElementById('board');
+    const flagCountSpan = document.getElementById('flagCount');
+    const totalBombsSpan = document.getElementById('totalBombs');
+    const msgArea = document.getElementById('msgArea');
+    const modeBtns = document.querySelectorAll('.mode-btn');
+    const diffBtns = document.querySelectorAll('.diff-btn');
+    const newGameBtn = document.getElementById('newGameBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const toggleModeBtn = document.getElementById('toggleModeBtn');
+    const revealBtn = document.getElementById('revealBtn');
+    const flagBtn = document.getElementById('flagBtn');
+    const mobileHint = document.querySelector('.mobile-hint');
+    const pcHint = document.querySelector('.pc-hint');
+
+    // ---------- 辅助函数 ----------
+    function getNeighbors(r, c) {
+        const neighbors = [];
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                if (dr === 0 && dc === 0) continue;
+                const nr = r + dr, nc = c + dc;
+                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+                    neighbors.push([nr, nc]);
+                }
+            }
+        }
+        return neighbors;
+    }
+
+    function randomBombType() {
+        const signs = [1, -1];
+        const sign = signs[Math.floor(Math.random() * 2)];
+        if (mode === 'complex') {
+            if (Math.random() < 0.5) {
+                return { real: sign, imag: 0, type: 'real' };
+            } else {
+                return { real: 0, imag: sign, type: 'imag' };
+            }
+        } else {
+            if (Math.random() < 0.5) {
+                return { real: sign, j: 0, type: 'time' };
+            } else {
+                return { real: 0, j: sign, type: 'space' };
+            }
+        }
+    }
+
+    function sumBombs(bombs, mode) {
+        let realSum = 0;
+        let imagSum = 0;
+        for (let b of bombs) {
+            realSum += b.real;
+            if (mode === 'complex') {
+                imagSum += b.imag;
+            } else {
+                imagSum += b.j;
+            }
+        }
+        return { real: realSum, imag: imagSum };
+    }
+
+    function magnitudeInfo(sum, mode) {
+        if (mode === 'complex') {
+            const mag = Math.sqrt(sum.real * sum.real + sum.imag * sum.imag);
+            return { display: formatComplexMagnitude(mag), numeric: mag, isImag: false };
+        } else {
+            const sq = sum.real * sum.real - sum.imag * sum.imag;
+            if (sq >= 0) {
+                const mag = Math.sqrt(sq);
+                return { display: formatMinkowskiMagnitude(mag, false), numeric: mag, isImag: false };
+            } else {
+                const mag = Math.sqrt(-sq);
+                return { display: formatMinkowskiMagnitude(mag, true), numeric: mag, isImag: true };
+            }
+        }
+    }
+
+    function formatComplexMagnitude(mag) {
+        if (mag === 0) return '0';
+        if (Number.isInteger(mag)) return mag.toString();
+        const sqrtMatch = (val) => {
+            for (let i = 2; i <= 40; i++) {
+                const sqrtVal = Math.sqrt(i);
+                if (Math.abs(val - sqrtVal) < 1e-9) return `√${i}`;
+                const mult = val / sqrtVal;
+                if (Math.abs(mult - Math.round(mult)) < 1e-9 && Math.round(mult) !== 0) {
+                    const m = Math.round(mult);
+                    if (m === 1) return `√${i}`;
+                    return `${m}√${i}`;
+                }
+            }
+            return val.toFixed(4).replace(/\.?0+$/, '');
+        };
+        return sqrtMatch(mag);
+    }
+
+    function formatMinkowskiMagnitude(mag, isImag) {
+        const base = formatComplexMagnitude(mag);
+        if (mag === 0) return '0';
+        if (isImag) {
+            if (base === '1') return 'i';
+            return base + 'i';
+        } else {
+            return base;
+        }
+    }
+
+    function getCellNumber(r, c) {
+        const neighbors = getNeighbors(r, c);
+        const bombs = [];
+        for (let [nr, nc] of neighbors) {
+            const bomb = board[nr][nc].bomb;
+            if (bomb) bombs.push(bomb);
+        }
+        if (bombs.length === 0) return { display: '', raw: null, sum: { real: 0, imag: 0 }, bombCount: 0, bombsList: bombs };
+        const sum = sumBombs(bombs, mode);
+        const magInfo = magnitudeInfo(sum, mode);
+        return {
+            display: magInfo.display,
+            raw: magInfo,
+            sum: sum,
+            bombCount: bombs.length,
+            bombsList: bombs
+        };
+    }
+
+    function getActualBombCount(r, c) {
+        const neighbors = getNeighbors(r, c);
+        let count = 0;
+        for (let [nr, nc] of neighbors) {
+            if (board[nr][nc].bomb) count++;
+        }
+        return count;
+    }
+
+    function getFlagCountAround(r, c) {
+        const neighbors = getNeighbors(r, c);
+        let count = 0;
+        for (let [nr, nc] of neighbors) {
+            if (board[nr][nc].flag) count++;
+        }
+        return count;
+    }
+
+    function checkWin() {
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const cell = board[r][c];
+                if (!cell.bomb && !cell.revealed) return false;
+            }
+        }
+        return true;
+    }
+
+    function doubleClickReveal(r, c) {
+        if (gameOver) return;
+        const cell = board[r][c];
+        if (!cell.revealed || cell.bomb) return;
+        const numInfo = getCellNumber(r, c);
+        if (numInfo.display === '') return;
+
+        const actualBombs = getActualBombCount(r, c);
+        const flagsAround = getFlagCountAround(r, c);
+
+        if (flagsAround === actualBombs && actualBombs > 0) {
+            const neighbors = getNeighbors(r, c);
+            let revealedAny = false;
+            for (let [nr, nc] of neighbors) {
+                const nCell = board[nr][nc];
+                if (!nCell.revealed && !nCell.flag) {
+                    if (nCell.bomb) {
+                        nCell.revealed = true;
+                        revealedAny = true;
+                    } else {
+                        revealCell(nr, nc);
+                        revealedAny = true;
+                    }
+                }
+            }
+            if (revealedAny) {
+                if (checkWin()) {
+                    endGame(true);
+                } else {
+                    let hitBomb = false;
+                    for (let [nr, nc] of neighbors) {
+                        if (board[nr][nc].revealed && board[nr][nc].bomb) {
+                            hitBomb = true;
+                            break;
+                        }
+                    }
+                    if (hitBomb) {
+                        endGame(false);
+                    } else {
+                        renderBoard();
+                    }
+                }
+            }
+        }
+    }
+
+    function endGame(isWin) {
+        if (gameOver) return;
+        gameOver = true;
+        win = isWin;
+
+        let correctFlags = 0;
+        let wrongFlags = 0;
+        let missedBombs = 0;
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const cell = board[r][c];
+                if (cell.flag) {
+                    if (cell.bomb) correctFlags++;
+                    else wrongFlags++;
+                } else {
+                    if (cell.bomb) missedBombs++;
+                }
+            }
+        }
+
+        let msg = '';
+        if (isWin) {
+            msg = `🎉 胜利！ 标对雷: ${correctFlags} / ${bombCount}`;
+            if (wrongFlags > 0) msg += `，标错: ${wrongFlags}`;
+            if (missedBombs > 0) msg += `，漏标: ${missedBombs}`;
+        } else {
+            msg = `💥 失败。 标对雷: ${correctFlags}，标错: ${wrongFlags}，漏标: ${missedBombs}`;
+        }
+        msgArea.innerHTML = `<span class="end-message">${msg}</span>`;
+
+        selectedRow = -1;
+        selectedCol = -1;
+        updateActionButtons();
+        renderBoard(true);
+    }
+
+    // ---------- 根据棋盘大小动态设置格子尺寸 ----------
+    function updateBoardSize() {
+        // 根据列数动态计算格子大小和间距
+        // 可用宽度大约为 game-container 的 max-width 减去一些 padding
+        // 为了简单起见，我们基于 COLS 设定几个档位
+        const boardWrapperWidth = boardEl.parentElement.clientWidth - 20; // 减去一些余量
+        const padding = 16; // board padding 左右各 8px
+        const availableWidth = Math.max(boardWrapperWidth - padding, 200);
+        const gap = COLS > 10 ? 2 : 3;
+        const totalGap = (COLS - 1) * gap;
+        // 计算格子尺寸，但设置最小和最大值
+        let cellSize = Math.floor((availableWidth - totalGap) / COLS);
+        // 限制范围
+        cellSize = Math.min(Math.max(cellSize, 20), 50);
+
+        // 设置 CSS 变量
+        boardEl.style.setProperty('--cell-size', cellSize + 'px');
+        boardEl.style.setProperty('--cell-gap', gap + 'px');
+
+        // 根据格子尺寸和数量设置 data-size 属性，用于调整字体
+        boardEl.removeAttribute('data-size');
+        if (cellSize <= 26) {
+            boardEl.dataset.size = 'huge';
+        } else if (cellSize <= 32) {
+            boardEl.dataset.size = 'xlarge';
+        } else if (cellSize <= 38) {
+            boardEl.dataset.size = 'large';
+        }
+    }
+
+    // ---------- 渲染棋盘 ----------
+    function renderBoard(showAllBombs = false) {
+        // 先更新尺寸
+        updateBoardSize();
+
+        boardEl.style.gridTemplateColumns = `repeat(${COLS}, var(--cell-size))`;
+        boardEl.innerHTML = '';
+
+        if (gameOver) {
+            showAllBombs = true;
+        }
+
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const cell = board[r][c];
+                const cellDiv = document.createElement('div');
+                cellDiv.className = 'cell';
+
+                if (selectedRow === r && selectedCol === c && !gameOver && interactionMode === 'mobile') {
+                    cellDiv.classList.add('selected');
+                }
+
+                if (cell.revealed) {
+                    cellDiv.classList.add('revealed');
+                    if (!cell.bomb) {
+                        const numInfo = getCellNumber(r, c);
+                        if (numInfo.display === '') {
+                            cellDiv.classList.add('blank');
+                            cellDiv.textContent = '';
+                        } else {
+                            cellDiv.textContent = numInfo.display;
+                        }
+                    } else {
+                        cellDiv.textContent = '💣';
+                    }
+                } else {
+                    if (cell.flag) {
+                        cellDiv.classList.add('flag');
+                    }
+                    if (showAllBombs && cell.bomb) {
+                        cellDiv.classList.add('bomb-revealed');
+                        let symbol = '';
+                        if (mode === 'complex') {
+                            if (cell.bomb.real === 1) symbol = '+1';
+                            else if (cell.bomb.real === -1) symbol = '-1';
+                            else if (cell.bomb.imag === 1) symbol = '+i';
+                            else if (cell.bomb.imag === -1) symbol = '-i';
+                        } else {
+                            if (cell.bomb.real === 1) symbol = '+1';
+                            else if (cell.bomb.real === -1) symbol = '-1';
+                            else if (cell.bomb.j === 1) symbol = '+j';
+                            else if (cell.bomb.j === -1) symbol = '-j';
+                        }
+                        cellDiv.textContent = symbol;
+                    }
+                }
+
+                cellDiv.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (gameOver) return;
+
+                    const now = Date.now();
+                    const isDoubleClick = (now - lastClickTime < DOUBLE_CLICK_DELAY) &&
+                                          lastClickRow === r && lastClickCol === c;
+
+                    if (isDoubleClick) {
+                        lastClickTime = 0;
+                        lastClickRow = -1;
+                        lastClickCol = -1;
+                        if (cell.revealed && !cell.bomb) {
+                            doubleClickReveal(r, c);
+                        }
+                        return;
+                    }
+
+                    lastClickTime = now;
+                    lastClickRow = r;
+                    lastClickCol = c;
+
+                    if (interactionMode === 'mobile') {
+                        if (selectedRow === r && selectedCol === c) {
+                            selectedRow = -1;
+                            selectedCol = -1;
+                        } else {
+                            selectedRow = r;
+                            selectedCol = c;
+                        }
+                        updateActionButtons();
+                        renderBoard();
+                    } else {
+                        if (cell.flag) return;
+                        if (cell.revealed) return;
+                        if (cell.bomb) {
+                            cell.revealed = true;
+                            renderBoard();
+                            endGame(false);
+                        } else {
+                            revealCell(r, c);
+                            if (checkWin()) {
+                                endGame(true);
+                            } else {
+                                renderBoard();
+                            }
+                        }
+                    }
+                });
+
+                cellDiv.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    if (gameOver) return;
+                    const cell = board[r][c];
+                    if (cell.revealed) return;
+                    if (cell.flag) {
+                        cell.flag = false;
+                        flagCount--;
+                    } else {
+                        cell.flag = true;
+                        flagCount++;
+                    }
+                    updateFlagDisplay();
+                    if (interactionMode === 'mobile') {
+                        if (selectedRow === r && selectedCol === c) {
+                            selectedRow = -1;
+                            selectedCol = -1;
+                        }
+                        updateActionButtons();
+                    }
+                    renderBoard();
+                });
+
+                boardEl.appendChild(cellDiv);
+            }
+        }
+        updateFlagDisplay();
+        if (interactionMode === 'mobile') {
+            updateActionButtons();
+        }
+    }
+
+    function updateFlagDisplay() {
+        flagCountSpan.textContent = flagCount;
+        totalBombsSpan.textContent = bombCount;
+    }
+
+    function updateActionButtons() {
+        if (interactionMode !== 'mobile') {
+            revealBtn.disabled = true;
+            flagBtn.disabled = true;
+            return;
+        }
+        const hasSelection = selectedRow >= 0 && selectedCol >= 0 && !gameOver;
+        if (!hasSelection) {
+            revealBtn.disabled = true;
+            flagBtn.disabled = true;
+            return;
+        }
+        const cell = board[selectedRow][selectedCol];
+        if (cell.revealed) {
+            revealBtn.disabled = true;
+            flagBtn.disabled = true;
+            return;
+        }
+        revealBtn.disabled = cell.flag;
+        flagBtn.disabled = false;
+    }
+
+    function revealSelected() {
+        if (gameOver) return;
+        if (selectedRow < 0 || selectedCol < 0) return;
+        const cell = board[selectedRow][selectedCol];
+        if (cell.revealed || cell.flag) return;
+
+        if (cell.bomb) {
+            cell.revealed = true;
+            renderBoard();
+            endGame(false);
+        } else {
+            revealCell(selectedRow, selectedCol);
+            if (checkWin()) {
+                endGame(true);
+            } else {
+                selectedRow = -1;
+                selectedCol = -1;
+                renderBoard();
+            }
+        }
+    }
+
+    function toggleFlagSelected() {
+        if (gameOver) return;
+        if (selectedRow < 0 || selectedCol < 0) return;
+        const cell = board[selectedRow][selectedCol];
+        if (cell.revealed) return;
+
+        if (cell.flag) {
+            cell.flag = false;
+            flagCount--;
+        } else {
+            cell.flag = true;
+            flagCount++;
+        }
+        updateFlagDisplay();
+        renderBoard();
+    }
+
+    function revealCell(r, c) {
+        const cell = board[r][c];
+        if (cell.revealed || cell.flag || cell.bomb) return;
+
+        cell.revealed = true;
+
+        const neighbors = getNeighbors(r, c);
+        let bombCount = 0;
+        for (let [nr, nc] of neighbors) {
+            if (board[nr][nc].bomb) bombCount++;
+        }
+        if (bombCount === 0) {
+            for (let [nr, nc] of neighbors) {
+                const nCell = board[nr][nc];
+                if (!nCell.revealed && !nCell.flag && !nCell.bomb) {
+                    revealCell(nr, nc);
+                }
+            }
+        }
+    }
+
+    // ---------- 初始化新游戏 ----------
+    function initGame() {
+        gameOver = false;
+        win = false;
+        flagCount = 0;
+        selectedRow = -1;
+        selectedCol = -1;
+        lastClickTime = 0;
+        lastClickRow = -1;
+        lastClickCol = -1;
+
+        const diff = DIFFICULTIES[difficulty];
+        ROWS = diff.rows;
+        COLS = diff.cols;
+        TOTAL_BOMBS = diff.bombs;
+        bombCount = TOTAL_BOMBS;
+
+        board = Array.from({ length: ROWS }, () =>
+            Array.from({ length: COLS }, () => ({
+                bomb: null,
+                revealed: false,
+                flag: false
+            }))
+        );
+
+        let placed = 0;
+        while (placed < TOTAL_BOMBS) {
+            const r = Math.floor(Math.random() * ROWS);
+            const c = Math.floor(Math.random() * COLS);
+            if (board[r][c].bomb) continue;
+            board[r][c].bomb = randomBombType();
+            placed++;
+        }
+
+        flagCount = 0;
+        updateFlagDisplay();
+        // 先渲染再调整，因为渲染时会调用 updateBoardSize
+        renderBoard();
+        updateActionButtons();
+
+        msgArea.innerHTML = `难度: ${getDifficultyName(difficulty)} · ${ROWS}×${COLS} · ${TOTAL_BOMBS}雷`;
+    }
+
+    function getDifficultyName(diff) {
+        const names = { easy: '初级', medium: '中级', hard: '高级', expert: '专家' };
+        return names[diff] || diff;
+    }
+
+    // ---------- 模式切换 ----------
+    function setMode(newMode) {
+        if (mode === newMode) return;
+        mode = newMode;
+        modeBtns.forEach(btn => {
+            if (btn.dataset.mode === mode) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+        initGame();
+    }
+
+    function setDifficulty(newDiff) {
+        if (difficulty === newDiff) return;
+        difficulty = newDiff;
+        diffBtns.forEach(btn => {
+            if (btn.dataset.diff === difficulty) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+        initGame();
+    }
+
+    function toggleInteractionMode() {
+        if (interactionMode === 'mobile') {
+            interactionMode = 'pc';
+            gameContainer.classList.remove('mobile-mode');
+            gameContainer.classList.add('pc-mode');
+            toggleModeBtn.textContent = '💻 电脑模式';
+            mobileHint.style.display = 'none';
+            pcHint.style.display = 'flex';
+            selectedRow = -1;
+            selectedCol = -1;
+        } else {
+            interactionMode = 'mobile';
+            gameContainer.classList.remove('pc-mode');
+            gameContainer.classList.add('mobile-mode');
+            toggleModeBtn.textContent = '📱 手机模式';
+            mobileHint.style.display = 'flex';
+            pcHint.style.display = 'none';
+        }
+        updateActionButtons();
+        renderBoard();
+    }
+
+    // ---------- 事件绑定 ----------
+    modeBtns.forEach(btn => {
+        btn.addEventListener('click', () => setMode(btn.dataset.mode));
+    });
+
+    diffBtns.forEach(btn => {
+        btn.addEventListener('click', () => setDifficulty(btn.dataset.diff));
+    });
+
+    newGameBtn.addEventListener('click', initGame);
+    resetBtn.addEventListener('click', initGame);
+    toggleModeBtn.addEventListener('click', toggleInteractionMode);
+
+    revealBtn.addEventListener('click', revealSelected);
+    flagBtn.addEventListener('click', toggleFlagSelected);
+
+    document.addEventListener('contextmenu', (e) => {
+        if (e.target.closest('.cell')) e.preventDefault();
+    });
+
+    // 窗口大小改变时重新调整棋盘
+    window.addEventListener('resize', () => {
+        if (boardEl.children.length > 0) {
+            updateBoardSize();
+            // 重新设置网格列宽
+            boardEl.style.gridTemplateColumns = `repeat(${COLS}, var(--cell-size))`;
+        }
+    });
+
+    initGame();
+</script>
+</body>
+</html>
